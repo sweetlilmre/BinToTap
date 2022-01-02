@@ -37,8 +37,8 @@ static uint8_t header_loader[171] = {0};
 static uint8_t start_addr_low = 0x02, start_addr_high = 0x03;
 static uint8_t end_addr_low = 0x04, end_addr_high = 0x03;
 
-#define DEFAULT_TAPNAME "TapeCartLoader.tap"
-#define HEADER_TAPNAME "HeaderLoader.tap"
+#define DEFAULT_TAPNAME "TapeCartLoader"
+#define HEADER_TAPNAME "HeaderLoader"
 char tapfileName[256] = {0};
 
 FILE* tapFile = NULL;
