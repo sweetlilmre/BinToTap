@@ -251,7 +251,7 @@ bool parseArgs(int argc, char* argv[])
     }
     else
     {
-        if (!strnicmp(argv[1], "-d", 2))
+        if (!strncmp(argv[1], "-d", 2))
         {
             setTapName(DEFAULT_TAPNAME);
             printf("Writing default loader to %s\n", tapfileName);
@@ -259,7 +259,7 @@ bool parseArgs(int argc, char* argv[])
             memcpy(header_loader, default_loader, 171);
             writeTap(vector_datafunc);
         }
-        else if (!strnicmp(argv[1], "-h", 2))
+        else if (!strncmp(argv[1], "-h", 2))
         {
             if (argc < 3)
             {
@@ -279,7 +279,7 @@ bool parseArgs(int argc, char* argv[])
             long read = fread(header_loader, 1, 171, loaderFile);
             if (read != 171)
             {
-                printf("loaderfile size was: %d not exactly 171 bytes long!\n", read);
+                printf("loaderfile size was: %ld not exactly 171 bytes long!\n", read);
                 if (read < 171)
                 {
                     printf("Missing bytes are zero padded!\n");
@@ -294,7 +294,7 @@ bool parseArgs(int argc, char* argv[])
             writeTap(vector_datafunc);
             fclose(loaderFile);
         }
-        else if (!strnicmp(argv[1], "-p", 2))
+        else if (!strncmp(argv[1], "-p", 2))
         {
             if (argc < 3)
             {
