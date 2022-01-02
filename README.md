@@ -3,6 +3,17 @@ Transforms C64 binary header loaders and PRG files into TAP files
 
 This is based off of the excellent work of Ingo Korb's TapeCart project: https://github.com/ikorb/tapecart
 
+To complile this for windows:
+Install:
+1. VSCode
+2. MSYS2
+3. MINGW64 from MSYS2 (read the MSYS2 page)
+4. The C/C++ extension for VSCode
+
+Then open VSCode in the cloned folder and compile using GCC (if you have used default paths for MSYS2 then this should probably just work).
+Compliling this under various Linux distributions should be fairly easy.
+
+
 ```
 BinToTap v1.0
 USAGE:
