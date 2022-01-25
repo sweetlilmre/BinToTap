@@ -10,8 +10,10 @@
             "request": "launch",
             "program": "${fileDirname}\\${fileBasenameNoExtension}.exe",
             "args": [
+                "-n",
+                "Mini Zork!",
                 "-p",
-                "browser.prg"
+                "ozmoo_zip_good"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

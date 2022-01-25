@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <getopt.h>
 
 /* half-wave pulse timer values */
 #define CBMPULSE_SHORT (0x30 - 1)
@@ -227,110 +228,142 @@ void setTapName(const char* baseName)
     strcat(tapfileName, ".tap");
 }
 
+void printUsage()
+{
+    printf("USAGE:\n");
+    printf("\n");
+    printf("BinToTap args [input file]\n");
+    printf("  BinToTap -d\n");
+    printf("    Will generate a TAP file containting the default TAPECART fastloader from Ingo Korb\n");
+    printf("    The file will be named %s\n\n", DEFAULT_TAPNAME);
+    printf("  BinToTap -h loaderfile\n");
+    printf("    Will generate a TAP file containting the loader specified by \"loaderfile\" this must be exactly 171 bytes in size\n");
+    printf("    The file will be named %s\n\n", HEADER_TAPNAME);
+    printf("  BinToTap -p prgfile\n");
+    printf("    Will generate a TAP file containting the PRG specified by \"prgfile\"\n");
+    printf("    The file will be named the same as the PRG file, but with a TAP extension\n\n");
+    printf("  If -n loadname is specified with any other option the \"loadname\" string (max 16 chars) will be used in the tape header\n");
+}
+
 bool parseArgs(int argc, char* argv[])
 {
     // make sure we init to zero for padding.
     memset(header_loader, 0, 171);
 
-    printf("BinToTap v1.0\n");
-    if (argc < 2)
+    int opt;
+    while ((opt = getopt(argc, argv, "dn:h:p:")) != -1)
     {
-        printf("USAGE:\n");
-        printf("\n");
-        printf("BinToTap args [input file]\n");
-        printf("  BinToTap -d\n");
-        printf("    Will generate a TAP file containting the default TAPECART fastloader from Ingo Korb\n");
-        printf("    The file will be named %s\n\n", DEFAULT_TAPNAME);
-        printf("  BinToTap -h loaderfile\n");
-        printf("    Will generate a TAP file containting the loader specified by \"loaderfile\" this must be exactly 171 bytes in size\n");
-        printf("    The file will be named %s\n\n", HEADER_TAPNAME);
-        printf("  BinToTap -p prgfile\n");
-        printf("    Will generate a TAP file containting the PRG specified by \"prgfile\"\n");
-        printf("    The file will be named the same as the PRG file, but with a TAP extension\n\n");
-        return false;
-    }
-    else
-    {
-        if (!strncmp(argv[1], "-d", 2))
+        switch (opt)
         {
-            setTapName(DEFAULT_TAPNAME);
-            printf("Writing default loader to %s\n", tapfileName);
-
-            memcpy(header_loader, default_loader, 171);
-            writeTap(vector_datafunc);
-        }
-        else if (!strncmp(argv[1], "-h", 2))
-        {
-            if (argc < 3)
+            case 'n':
             {
-                printf("Missing loaderfile argument\n");
-                return (false);
-            }
-            const char* loader_arg = argv[2];
-            setTapName(HEADER_TAPNAME);
-            printf("Writing custom loader %s to %s\n", loader_arg, tapfileName);
-
-            FILE* loaderFile = fopen(loader_arg, "r+b");
-            if (!loaderFile)
-            {
-                printf("Unable to open loaderfile: %s\n", loader_arg);
-                return false;
-            }
-            long read = fread(header_loader, 1, 171, loaderFile);
-            if (read != 171)
-            {
-                printf("loaderfile size was: %ld not exactly 171 bytes long!\n", read);
-                if (read < 171)
+                int len = strlen(optarg);
+                if (len > 16)
                 {
-                    printf("Missing bytes are zero padded!\n");
+                    printf("-n specified with a string longer than 16 characters!\n");
+                    printf("It will be truncated\n");
                 }
-                else
+                for (int i = 0; i < 16; i++)
                 {
-                    printf("Extra bytes ignored!\n");
+                    char c = i < len ? optarg[i] : ' ';
+                    if (c >= 'a' && c <= 'z')
+                        c = c - 32;
+                    if (c < 32 || c > 95)
+                        c = ' ';
+                    TAP_FILE_NAME16[i] = c;
                 }
-                printf("Bad things may happen!\n");
             }
-
-            writeTap(vector_datafunc);
-            fclose(loaderFile);
-        }
-        else if (!strncmp(argv[1], "-p", 2))
-        {
-            if (argc < 3)
+            break;
+            case 'd':
             {
-                printf("Missing prgfile argument\n");
-                return (false);
-            }
-            const char* prg_arg = argv[2];
-            setTapName(prg_arg);
+                setTapName(DEFAULT_TAPNAME);
+                printf("Writing default loader to %s\n", tapfileName);
 
-            printf("Writing tap from %s to %s\n", prg_arg, tapfileName);
-            FILE* prgFile = fopen(prg_arg, "rb");
-            if (!prgFile)
+                memcpy(header_loader, default_loader, 171);
+                writeTap(vector_datafunc);
+            }
+            break;
+            case 'h':
             {
-                printf("Unable to open prgfile: %s\n", prg_arg);
-                return false;
+                const char* loader_arg = optarg;
+                setTapName(HEADER_TAPNAME);
+                printf("Writing custom loader %s to %s\n", loader_arg, tapfileName);
+
+                FILE* loaderFile = fopen(loader_arg, "r+b");
+                if (!loaderFile)
+                {
+                    printf("Unable to open loaderfile: %s\n", loader_arg);
+                    return false;
+                }
+                long read = fread(header_loader, 1, 171, loaderFile);
+                if (read != 171)
+                {
+                    printf("loaderfile size was: %ld not exactly 171 bytes long!\n", read);
+                    if (read < 171)
+                    {
+                        printf("Missing bytes are zero padded!\n");
+                    }
+                    else
+                    {
+                        printf("Extra bytes ignored!\n");
+                    }
+                    printf("Bad things may happen!\n");
+                }
+
+                writeTap(vector_datafunc);
+                fclose(loaderFile);
             }
+            break;
+            case 'p':
+            {
+                const char* prg_arg = optarg;
+                setTapName(prg_arg);
 
-            long fileSize = getFileSize(prg_arg);
-            fread(&start_addr_low, 1, 1, prgFile);
-            fread(&start_addr_high, 1, 1, prgFile);
-            fileSize -= 2;
-            uint16_t start_addr = start_addr_low | (start_addr_high << 8);
-            uint16_t end_addr = start_addr + fileSize;
-            end_addr_low = end_addr & 0xFF;
-            end_addr_high = end_addr >> 8;
+                printf("Writing tap from %s to %s\n", prg_arg, tapfileName);
+                FILE* prgFile = fopen(prg_arg, "rb");
+                if (!prgFile)
+                {
+                    printf("Unable to open prgfile: %s\n", prg_arg);
+                    return false;
+                }
 
-            writeTap(prg_datafunc, prgFile);
+                long fileSize = getFileSize(prg_arg);
+                fread(&start_addr_low, 1, 1, prgFile);
+                fread(&start_addr_high, 1, 1, prgFile);
+                fileSize -= 2;
+                uint16_t start_addr = start_addr_low | (start_addr_high << 8);
+                uint16_t end_addr = start_addr + fileSize;
+                end_addr_low = end_addr & 0xFF;
+                end_addr_high = end_addr >> 8;
 
-            fclose(prgFile);
+                writeTap(prg_datafunc, prgFile);
+
+                fclose(prgFile);
+            }
+            break;
+            case '?':
+            {
+                printUsage();
+            }
+            break;
         }
     }
+
     return true;
 }
 
 int main(int argc, char* argv[])
 {
+    printf("BinToTap v1.0\n");
+    for (int i = 0; i < argc; i++)
+    {
+        printf("arg: %d, val: %s\n", i, argv[i]);
+    }
+    if (argc == 1)
+    {
+        printUsage();
+        return (0);
+    }
     if (!parseArgs(argc, argv))
         return 1;
 }
