@@ -11,7 +11,7 @@ Install:
 4. The C/C++ extension for VSCode
 
 Then open VSCode in the cloned folder and compile using GCC (if you have used default paths for MSYS2 then this should probably just work).
-Compliling this under various Linux distributions should be fairly easy.
+Compliling this under various Linux distributions should be fairly easy (with gcc installed "g++ -o BinToTap BinToTap.cpp" is sufficient).
 
 
 ```
